@@ -1,0 +1,45 @@
+function getYoutubeVideos() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet(); // Change to the specific sheet where you want to display the results
+  var channelId = sheet.getRange("B2").getValue(); // Read the channel ID from cell B2
+  var apiKey = 'XXXXXX'; // Replace with your YouTube Data API v3 key
+  
+  var maxResults = 50; // Set max results to 50 (maximum allowed value)
+  var url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' + channelId + '&maxResults=' + maxResults + '&order=date&type=video&key=' + apiKey;
+  var response = UrlFetchApp.fetch(url);
+  var jsonResponse = JSON.parse(response.getContentText());
+  var videos = jsonResponse.items;
+  
+  // Clear existing content
+  //sheet.getRange("C2:E").clearContent();
+  
+  var rowIndex = 2; // Start from row 2 in the sheet
+  var videosDisplayed = 0;
+  for (var i = 0; i < videos.length && videosDisplayed < 5; i++) {
+    var videoId = videos[i].id.videoId;
+    var videoDetailsUrl = 'https://www.googleapis.com/youtube/v3/videos?id=' + videoId + '&part=contentDetails&key=' + apiKey;
+    var detailsResponse = UrlFetchApp.fetch(videoDetailsUrl);
+    var detailsJsonResponse = JSON.parse(detailsResponse.getContentText());
+    var videoDetails = detailsJsonResponse.items[0].contentDetails;
+    
+    var duration = getVideoDurationInSeconds(videoDetails.duration);
+    
+    if (duration >= 180 && duration <= 1800) { // At least 3 minutes (180 seconds) and less than 30 minutes (900 seconds)
+      var videoTitle = videos[i].snippet.title;
+      var videoUrl = 'https://www.youtube.com/watch?v=' + videoId;
+      var publishedAt = videos[i].snippet.publishedAt;
+      
+      sheet.getRange(rowIndex, 3).setValue(videoTitle);
+      sheet.getRange(rowIndex, 4).setValue(videoUrl);
+      rowIndex++;
+      videosDisplayed++;
+    }
+  }
+}
+
+function getVideoDurationInSeconds(duration) {
+  var match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+  var hours = (parseInt(match[1]) || 0) * 3600;
+  var minutes = (parseInt(match[2]) || 0) * 60;
+  var seconds = parseInt(match[3]) || 0;
+  return hours + minutes + seconds;
+}
