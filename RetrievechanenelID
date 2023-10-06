@@ -1,0 +1,28 @@
+function getChannelIdFromUrlSource() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var inputUrl = sheet.getRange('A2').getValue();
+  
+  if (inputUrl) {
+    var response = UrlFetchApp.fetch(inputUrl, {'muteHttpExceptions': true});
+    if (response.getResponseCode() === 200) {
+      var content = response.getContentText();
+      var channelId = extractChannelIdFromContent(content);
+      
+      if (channelId) {
+        sheet.getRange('B2').setValue(channelId);
+      } else {
+        sheet.getRange('B2').setValue('Channel ID not found');
+      }
+    } else {
+      sheet.getRange('B2').setValue('Error fetching URL content');
+    }
+  } else {
+    sheet.getRange('B2').setValue('Invalid input URL');
+  }
+}
+
+function extractChannelIdFromContent(content) {
+  var channelIdRegex = /href="https:\/\/www\.youtube\.com\/channel\/([\w-]+)"/;
+  var match = content.match(channelIdRegex);
+  return match && match[1] ? match[1] : null;
+}
