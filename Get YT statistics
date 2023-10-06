@@ -1,0 +1,53 @@
+function getVideoStats() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var apiKey = 'AIzaSyAM5rKfgatFqnPbQ5GkHDkGGoOk3dkTtEE'; // Replace with your YouTube Data API v3 key
+  
+  for (var i = 2; i <= 6; i++) {
+    var videoLinkCell = sheet.getRange('D' + i);
+    var videoLink = videoLinkCell.getValue();
+    if (videoLink) {
+      var videoId = extractVideoId(videoLink);
+      if (videoId) {
+        var stats = fetchVideoStatistics(apiKey, videoId);
+        if (stats) {
+          sheet.getRange('E' + i).setValue(stats.viewCount);
+          sheet.getRange('F' + i).setValue(stats.likeCount);
+          sheet.getRange('G' + i).setValue(stats.commentCount);
+        } else {
+          sheet.getRange('E' + i).setValue('Error fetching statistics');
+          sheet.getRange('F' + i).setValue('Error fetching statistics');
+          sheet.getRange('G' + i).setValue('Error fetching statistics');
+        }
+      } else {
+        sheet.getRange('E' + i).setValue('Invalid video link');
+        sheet.getRange('F' + i).setValue('Invalid video link');
+        sheet.getRange('G' + i).setValue('Invalid video link');
+      }
+    }
+  }
+}
+
+function extractVideoId(url) {
+  var videoIdRegex = /^.*(?:(?:youtu\.be\/)|(?:youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=)))([\w-]{11}).*$/;
+  var match = url.match(videoIdRegex);
+  return (match && match[1]) ? match[1] : null;
+}
+
+function fetchVideoStatistics(apiKey, videoId) {
+  var apiUrl = 'https://www.googleapis.com/youtube/v3/videos?part=statistics&id=' + videoId + '&key=' + apiKey;
+  var response = UrlFetchApp.fetch(apiUrl, {'muteHttpExceptions': true});
+  
+  if (response.getResponseCode() === 200) {
+    var jsonResponse = JSON.parse(response.getContentText());
+    if (jsonResponse.items && jsonResponse.items.length > 0) {
+      var statistics = jsonResponse.items[0].statistics;
+      return {
+        'viewCount': parseInt(statistics.viewCount, 10),
+        'likeCount': parseInt(statistics.likeCount, 10),
+        'commentCount': parseInt(statistics.commentCount, 10)
+      };
+    }
+  }
+  
+  return null;
+}
