@@ -1,0 +1,31 @@
+// Replace with your YouTube Data API key
+const YOUTUBE_API_KEY = 'XXXXX';
+
+function searchYouTubeVideos() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const keyword = 'cat';
+  const maxResults = 10;
+  const searchUrl = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=date&maxResults=' + maxResults + '&q=' + encodeURIComponent(keyword) + '&key=' + YOUTUBE_API_KEY;
+  
+  const response = UrlFetchApp.fetch(searchUrl);
+  const data = JSON.parse(response.getContentText());
+  const videos = data.items;
+  
+  sheet.clearContents();
+  sheet.appendRow(['Title', 'Video URL', 'Description']);
+  
+  for (const video of videos) {
+    const title = video.snippet.title;
+    const videoUrl = 'https://www.youtube.com/watch?v=' + video.id.videoId;
+    const description = video.snippet.description;
+    
+    sheet.appendRow([title, videoUrl, description]);
+  }
+}
+
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('YouTube')
+      .addItem('Search Cat Videos', 'searchYouTubeVideos')
+      .addToUi();
+}
