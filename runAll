@@ -1,0 +1,24 @@
+function runAllScripts() {
+  try {
+    getChannelIdFromUrlSource();
+    Logger.log('getChannelIdsFromUrls completed successfully.');
+  } catch (error) {
+    Logger.log('Error in getChannelIdsFromUrls: ' + error);
+    return;
+  }
+
+  try {
+    getYoutubeVideos();
+    Logger.log('getYoutubeVideos completed successfully.');
+  } catch (error) {
+    Logger.log('Error in getYoutubeVideos: ' + error);
+    return;
+  }
+
+  try {
+    getVideoStats();
+    Logger.log('getVideoStats completed successfully.');
+  } catch (error) {
+    Logger.log('Error in getVideoStats: ' + error);
+  }
+}
